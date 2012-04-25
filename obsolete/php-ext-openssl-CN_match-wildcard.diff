@@ -1,0 +1,31 @@
+--- php-5.2.12/ext/openssl/openssl.c.orig	2010-02-20 19:27:09.000000000 +0100
++++ php-5.2.12/ext/openssl/openssl.c	2010-02-20 20:09:33.000000000 +0100
+@@ -3859,17 +3859,25 @@
+ 			return FAILURE;
+ 		}
+ 
++		/* Exact match */
+ 		match = strcmp(cnmatch, buf) == 0;
++		
++		/* Try wildcard match in remote's CN */
+ 		if (!match && strlen(buf) > 3 && buf[0] == '*' && buf[1] == '.') {
+-			/* Try wildcard */
+-
+ 			if (strchr(buf+2, '.')) {
+ 				char *tmp = strstr(cnmatch, buf+1);
+-
+ 				match = tmp && strcmp(tmp, buf+2) && tmp == strchr(cnmatch, '.');
+ 			}
+ 		}
+ 
++		/* Try wildcard match in CN_match */
++		if (!match && strlen(cnmatch) > 3 && cnmatch[0] == '*' && cnmatch[1] == '.') {
++			if (strchr(cnmatch+2, '.')) {
++				char *tmp = strstr(buf, cnmatch+1);
++				match = tmp && strcmp(tmp, cnmatch+2) && tmp == strchr(buf, '.');
++			}
++		}
++
+ 		if (!match) {
+ 			/* didn't match */
+ 			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Peer certificate CN=`%.*s' did not match expected CN=`%s'", name_len, buf, cnmatch);
