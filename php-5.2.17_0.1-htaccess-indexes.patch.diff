@@ -1,0 +1,14 @@
+diff -ur php-5.2.17.orig/sapi/apache2handler/apache_config.c php-5.2.17/sapi/apache2handler/apache_config.c
+--- php-5.2.17.orig/sapi/apache2handler/apache_config.c	2011-05-23 03:47:06.000000000 +0200
++++ php-5.2.17/sapi/apache2handler/apache_config.c	2011-09-03 23:12:08.000000000 +0200
+@@ -200,8 +200,8 @@
+ 
+ const command_rec php_dir_cmds[] =
+ {
+-	AP_INIT_TAKE2("php_value", php_apache_value_handler, NULL, OR_OPTIONS, "PHP Value Modifier"),
+-	AP_INIT_TAKE2("php_flag", php_apache_flag_handler, NULL, OR_OPTIONS, "PHP Flag Modifier"),
++	AP_INIT_TAKE2("php_value", php_apache_value_handler, NULL, OR_INDEXES, "PHP Value Modifier"),
++	AP_INIT_TAKE2("php_flag", php_apache_flag_handler, NULL, OR_INDEXES, "PHP Flag Modifier"),
+ 	AP_INIT_TAKE2("php_admin_value", php_apache_admin_value_handler, NULL, ACCESS_CONF|RSRC_CONF, "PHP Value Modifier (Admin)"),
+ 	AP_INIT_TAKE2("php_admin_flag", php_apache_admin_flag_handler, NULL, ACCESS_CONF|RSRC_CONF, "PHP Flag Modifier (Admin)"),
+ 	AP_INIT_TAKE1("PHPINIDir", php_apache_phpini_set, NULL, RSRC_CONF, "Directory containing the php.ini file"),

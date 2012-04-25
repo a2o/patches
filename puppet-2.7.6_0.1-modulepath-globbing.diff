@@ -1,0 +1,18 @@
+--- lib/puppet/node/environment.rb.orig	2011-01-20 01:29:41.000000000 +0100
++++ lib/puppet/node/environment.rb	2011-01-20 02:08:10.000000000 +0100
+@@ -96,8 +96,13 @@
+   # Cache the modulepath, so that we aren't searching through
+   # all known directories all the time.
+   cached_attr(:modulepath, Puppet[:filetimeout]) do
+-    dirs = self[:modulepath].split(File::PATH_SEPARATOR)
+-    dirs = ENV["PUPPETLIB"].split(File::PATH_SEPARATOR) + dirs if ENV["PUPPETLIB"]
++    globs = self[:modulepath].split(File::PATH_SEPARATOR)
++    globs = ENV["PUPPETLIB"].split(File::PATH_SEPARATOR) + globs if ENV["PUPPETLIB"]
++    dirs = []
++    globs.each do |glob|
++      globDirs = Dir.glob(glob)
++      dirs = dirs + globDirs
++    end
+     validate_dirs(dirs)
+   end
+ 

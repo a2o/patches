@@ -1,0 +1,15 @@
+--- secutil.c.orig	2012-01-04 12:43:52.000000000 +0100
++++ secutil.c	2012-01-04 12:44:15.000000000 +0100
+@@ -132,12 +132,5 @@
+   /* Misconfiguration check: don't ever chroot() to a directory writable by
+    * the current user.
+    */
+-  if (options & VSF_SECUTIL_OPTION_CHROOT)
+-  {
+-    if (vsf_sysutil_write_access("/"))
+-    {
+-      die("vsftpd: refusing to run with writable root inside chroot()");
+-    }
+-  }
+ }
+ 

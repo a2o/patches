@@ -1,0 +1,11 @@
+--- src/Makefile.in.orig	2010-11-18 01:40:53.000000000 +0100
++++ src/Makefile.in	2010-11-18 01:41:05.000000000 +0100
+@@ -274,7 +274,7 @@
+ top_srcdir = @top_srcdir@
+ AUTOMAKE_OPTIONS = foreign no-dependencies
+ SUBDIRS = mans
+-@COMPILER_IS_GCC_TRUE@AM_CFLAGS = -Wall -Werror
++@COMPILER_IS_GCC_TRUE@AM_CFLAGS = -Wall
+ include_HEADERS = oping.h
+ lib_LTLIBRARIES = liboping.la
+ 

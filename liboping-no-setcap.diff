@@ -1,0 +1,28 @@
+diff -ru liboping-1.6.1.orig/src/Makefile.am liboping-1.6.1/src/Makefile.am
+--- liboping-1.6.1.orig/src/Makefile.am	2011-03-06 10:03:21.000000000 +0100
++++ liboping-1.6.1/src/Makefile.am	2011-12-31 02:47:17.000000000 +0100
+@@ -56,8 +56,8 @@
+ 	@if test "x0" = "x$$UID"; then \
+ 		if test "xLinux" = "x`uname -s`"; then \
+ 			echo "Setting CAP_NET_RAW capability on binaries."; \
+-			setcap cap_net_raw=ep $(DESTDIR)$(bindir)/oping; \
+-			setcap cap_net_raw=ep $(DESTDIR)$(bindir)/noping; \
++			# setcap cap_net_raw=ep $(DESTDIR)$(bindir)/oping; \
++			# setcap cap_net_raw=ep $(DESTDIR)$(bindir)/noping; \
+ 		else \
+ 			echo "Setting set-UID bit on binaries."; \
+ 			chmod u+s $(DESTDIR)$(bindir)/oping; \
+diff -ru liboping-1.6.1.orig/src/Makefile.in liboping-1.6.1/src/Makefile.in
+--- liboping-1.6.1.orig/src/Makefile.in	2011-03-06 10:03:37.000000000 +0100
++++ liboping-1.6.1/src/Makefile.in	2011-12-31 02:47:07.000000000 +0100
+@@ -812,8 +812,8 @@
+ 	@if test "x0" = "x$$UID"; then \
+ 		if test "xLinux" = "x`uname -s`"; then \
+ 			echo "Setting CAP_NET_RAW capability on binaries."; \
+-			setcap cap_net_raw=ep $(DESTDIR)$(bindir)/oping; \
+-			setcap cap_net_raw=ep $(DESTDIR)$(bindir)/noping; \
++			# setcap cap_net_raw=ep $(DESTDIR)$(bindir)/oping; \
++			# setcap cap_net_raw=ep $(DESTDIR)$(bindir)/noping; \
+ 		else \
+ 			echo "Setting set-UID bit on binaries."; \
+ 			chmod u+s $(DESTDIR)$(bindir)/oping; \

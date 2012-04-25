@@ -1,0 +1,206 @@
+diff -ur collectd-5.0.0.orig/src/irq.c collectd-5.0.0/src/irq.c
+--- collectd-5.0.0.orig/src/irq.c	2011-03-27 18:35:08.000000000 +0200
++++ collectd-5.0.0/src/irq.c	2011-09-01 21:48:52.000000000 +0200
+@@ -41,8 +41,8 @@
+ };
+ static int config_keys_num = STATIC_ARRAY_SIZE (config_keys);
+ 
+-static unsigned int *irq_list;
+-static unsigned int irq_list_num;
++char                **irq_list;
++static unsigned int   irq_list_num = 0;
+ 
+ /* 
+  * irq_list_action:
+@@ -55,32 +55,59 @@
+ {
+ 	if (strcasecmp (key, "Irq") == 0)
+ 	{
+-		unsigned int *temp;
+-		unsigned int irq;
+-		char *endptr;
++		char   tmp_value[30];
++		char  *token;
++		char  *new_value;
++		char **temp;
+ 
+-		temp = (unsigned int *) realloc (irq_list, (irq_list_num + 1) * sizeof (unsigned int *));
+-		if (temp == NULL)
++		/* Check if multiple IRQs have been specified on the same config line */
++		if ((strchr(value, ' ') != NULL) || (strchr(value, ',') != NULL))
+ 		{
+-			fprintf (stderr, "irq plugin: Cannot allocate more memory.\n");
+-			ERROR ("irq plugin: Cannot allocate more memory.");
++			fprintf (stderr, "irq plugin: Please specify one "
++					 "irq at a time: `%s'\n", value);
++			ERROR   (        "irq plugin: Please specify one "
++			 		 "irq at a time: `%s'", value);
++			return (-1);
++		}
++
++		/* Unquoted number gets received as x.000000 */
++		strcpy(tmp_value, value);
++		if (strchr(tmp_value, '.') != NULL) {
++			token = strtok(tmp_value, ".");
++			strcpy(tmp_value, token);
++		}
++
++		if (strlen(tmp_value) > 3)
++		{
++			fprintf (stderr, "irq plugin: Max length of irq "
++					 "name is three characters: `%s'\n", tmp_value);
++			ERROR   (        "irq plugin: Max length of irq "
++					 "name is three characters: `%s'", tmp_value);
+ 			return (1);
+ 		}
+-		irq_list = temp;
+ 
+-		/* Clear errno, because we need it to see if an error occured. */
+-		errno = 0;
++		/* Allocate additional memory for value */
++		new_value = malloc(strlen(tmp_value) + 1);
++		if (new_value == NULL)
++		{
++			fprintf (stderr, "irq plugin: Cannot allocate more memory.\n");
++			ERROR   (        "irq plugin: Cannot allocate more memory.");
++			return (1);
++		}
++		strcpy(new_value, tmp_value);
+ 
+-		irq = strtol(value, &endptr, 10);
+-		if ((endptr == value) || (errno != 0))
++		/* Allocate additional memory for pointer in array */
++		temp = (char **) realloc (irq_list, (irq_list_num+1) * sizeof(char *));
++		if (temp == NULL)
+ 		{
+-			fprintf (stderr, "irq plugin: Irq value is not a "
+-					"number: `%s'\n", value);
+-			ERROR ("irq plugin: Irq value is not a "
+-					"number: `%s'", value);
++			fprintf (stderr, "irq plugin: Cannot allocate more memory.\n");
++			ERROR   (        "irq plugin: Cannot allocate more memory.");
+ 			return (1);
+ 		}
+-		irq_list[irq_list_num] = irq;
++		irq_list = temp;
++		irq_list[irq_list_num] = new_value;
++
++		/* Bump index */
+ 		irq_list_num++;
+ 	}
+ 	else if (strcasecmp (key, "IgnoreSelected") == 0)
+@@ -102,7 +129,7 @@
+  * both, `submit' and `write' to give client and server the ability to
+  * ignore certain stuff..
+  */
+-static int check_ignore_irq (const unsigned int irq)
++static int check_ignore_irq (const char *irq)
+ {
+ 	int i;
+ 
+@@ -110,19 +137,21 @@
+ 		return (0);
+ 
+ 	for (i = 0; (unsigned int)i < irq_list_num; i++)
+-		if (irq == irq_list[i])
++		if (strcmp(irq, irq_list[i]) == 0)
+ 			return (irq_list_action);
+ 
+ 	return (1 - irq_list_action);
+ }
+ 
+-static void irq_submit (unsigned int irq, derive_t value)
++
++
++static void irq_submit (const char *irq_name, derive_t value)
+ {
+ 	value_t values[1];
+ 	value_list_t vl = VALUE_LIST_INIT;
+ 	int status;
+ 
+-	if (check_ignore_irq (irq))
++	if (check_ignore_irq (irq_name))
+ 		return;
+ 
+ 	values[0].derive = value;
+@@ -134,13 +163,15 @@
+ 	sstrncpy (vl.type, "irq", sizeof (vl.type));
+ 
+ 	status = ssnprintf (vl.type_instance, sizeof (vl.type_instance),
+-			"%u", irq);
++			"%s", irq_name);
+ 	if ((status < 1) || ((unsigned int)status >= sizeof (vl.type_instance)))
+ 		return;
+ 
+ 	plugin_dispatch_values (&vl);
+ } /* void irq_submit */
+ 
++
++
+ static int irq_read (void)
+ {
+ 	FILE *fh;
+@@ -157,9 +188,8 @@
+ 
+ 	while (fgets (buffer, BUFSIZE, fh) != NULL)
+ 	{
+-		unsigned int irq;
++		char *irq_name;
+ 		derive_t irq_value;
+-		char *endptr;
+ 		int i;
+ 
+ 		char *fields[64];
+@@ -169,12 +199,13 @@
+ 		if (fields_num < 2)
+ 			continue;
+ 
+-		errno = 0;    /* To distinguish success/failure after call */
+-		irq = (unsigned int) strtoul (fields[0], &endptr, /* base = */ 10);
+-
+-		if ((endptr == fields[0]) || (errno != 0) || (*endptr != ':'))
++		/* Check if irq name contains colon, it is header otherwise */
++		if (strchr(fields[0], ':') == NULL)
+ 			continue;
+ 
++		errno = 0;    /* To distinguish success/failure after call */
++		irq_name = strtok(fields[0], ":");
++
+ 		irq_value = 0;
+ 		for (i = 1; i < fields_num; i++)
+ 		{
+@@ -182,6 +213,21 @@
+ 			value_t v;
+ 			int status;
+ 
++			/* Check if number */
++			if ((fields[i][0] != '1') &&
++			    (fields[i][0] != '2') &&
++			    (fields[i][0] != '3') &&
++			    (fields[i][0] != '4') &&
++			    (fields[i][0] != '5') &&
++			    (fields[i][0] != '6') &&
++			    (fields[i][0] != '7') &&
++			    (fields[i][0] != '8') &&
++			    (fields[i][0] != '9') &&
++			    (fields[i][0] != '0'))
++			{
++			    break;
++			}
++
+ 			status = parse_value (fields[i], &v, DS_TYPE_DERIVE);
+ 			if (status != 0)
+ 				break;
+@@ -189,10 +235,10 @@
+ 			irq_value += v.derive;
+ 		} /* for (i) */
+ 
+-		if (i < fields_num)
++		if (i <= 1)
+ 			continue;
+ 
+-		irq_submit (irq, irq_value);
++		irq_submit (irq_name, irq_value);
+ 	}
+ 
+ 	fclose (fh);

@@ -1,0 +1,18 @@
+--- php-5.2.17.orig/ext/curl/interface.c	2011-09-20 00:04:16.000000000 +0200
++++ php-5.2.17/ext/curl/interface.c	2011-09-20 00:07:45.000000000 +0200
+@@ -1384,6 +1384,7 @@
+ 			break;
+ 		case CURLOPT_FOLLOWLOCATION:
+ 			convert_to_long_ex(zvalue);
++/*
+ 			if ((PG(open_basedir) && *PG(open_basedir)) || PG(safe_mode)) {
+ 				if (Z_LVAL_PP(zvalue) != 0) {
+ 					php_error_docref(NULL TSRMLS_CC, E_WARNING, "CURLOPT_FOLLOWLOCATION cannot be activated when safe_mode is enabled or an open_basedir is set");
+@@ -1391,6 +1392,7 @@
+ 					return 1;
+ 				}
+ 			}
++*/
+ 			error = curl_easy_setopt(ch->cp, option, Z_LVAL_PP(zvalue));
+ 			break;
+ 		case CURLOPT_PRIVATE:

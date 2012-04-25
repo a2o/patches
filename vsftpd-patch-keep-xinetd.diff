@@ -1,0 +1,11 @@
+--- Makefile.orig	2010-11-18 01:20:36.000000000 +0100
++++ Makefile	2010-11-18 01:23:27.000000000 +0100
+@@ -37,7 +37,7 @@
+ 	else \
+ 		$(INSTALL) -m 644 vsftpd.8 /usr/man/man8/vsftpd.8; \
+ 		$(INSTALL) -m 644 vsftpd.conf.5 /usr/man/man5/vsftpd.conf.5; fi
+-	if [ -x /etc/xinetd.d ]; then \
++	if [ -x /etc/xinetd.d ] && [ ! -e /etc/xinetd.d/vsftpd ]; then \
+ 		$(INSTALL) -m 644 xinetd.d/vsftpd /etc/xinetd.d/vsftpd; fi
+ 
+ clean:
