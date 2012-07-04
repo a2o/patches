@@ -1,0 +1,19 @@
+diff -ur openssh-5.9p1.dist/session.c openssh-5.9p1/session.c
+--- openssh-5.9p1.dist/session.c	2011-05-20 03:23:10.000000000 +0200
++++ openssh-5.9p1/session.c	2012-05-14 21:31:17.212195598 +0200
+@@ -1434,6 +1434,7 @@
+ 	 * Descend the path, checking that each component is a
+ 	 * root-owned directory with strict permissions.
+ 	 */
++/*
+ 	for (cp = path; cp != NULL;) {
+ 		if ((cp = strchr(cp, '/')) == NULL)
+ 			strlcpy(component, path, sizeof(component));
+@@ -1457,6 +1458,7 @@
+ 			    cp == NULL ? "" : "component ", component);
+ 
+ 	}
++*/
+ 
+ 	if (chdir(path) == -1)
+ 		fatal("Unable to chdir to chroot path \"%s\": "
