@@ -1,0 +1,50 @@
+diff -ur postfix-2.9.2.orig/src/local/mailbox.c postfix-2.9.2/src/local/mailbox.c
+--- postfix-2.9.2.orig/src/local/mailbox.c	2012-01-25 01:40:34.000000000 +0100
++++ postfix-2.9.2/src/local/mailbox.c	2012-07-12 04:47:50.688422834 +0200
+@@ -226,7 +226,7 @@
+ 	     defer_append : bounce_append)
+ 	    (BOUNCE_FLAGS(state.request), BOUNCE_ATTR(state.msg_attr));
+     } else {
+-	dsb_simple(why, "2.0.0", "delivered to mailbox");
++	dsb_simple(why, "2.0.0", "delivered to mailbox at %s", mailbox);
+ 	deliver_status = sent(BOUNCE_FLAGS(state.request),
+ 			      SENT_ATTR(state.msg_attr));
+ 	if (var_biff) {
+diff -ur postfix-2.9.2.orig/src/local/maildir.c postfix-2.9.2/src/local/maildir.c
+--- postfix-2.9.2.orig/src/local/maildir.c	2012-01-25 01:41:08.000000000 +0100
++++ postfix-2.9.2/src/local/maildir.c	2012-07-12 04:47:50.688422834 +0200
+@@ -242,7 +242,7 @@
+ 	     defer_append : bounce_append)
+ 	    (BOUNCE_FLAGS(state.request), BOUNCE_ATTR(state.msg_attr));
+     } else {
+-	dsb_simple(why, "2.0.0", "delivered to maildir");
++	dsb_simple(why, "2.0.0", "delivered to maildir as %s", newfile);
+ 	deliver_status = sent(BOUNCE_FLAGS(state.request),
+ 			      SENT_ATTR(state.msg_attr));
+     }
+diff -ur postfix-2.9.2.orig/src/virtual/mailbox.c postfix-2.9.2/src/virtual/mailbox.c
+--- postfix-2.9.2.orig/src/virtual/mailbox.c	2012-07-12 04:50:17.558422836 +0200
++++ postfix-2.9.2/src/virtual/mailbox.c	2012-07-12 04:47:50.688422834 +0200
+@@ -218,7 +218,7 @@
+ 	    (BOUNCE_FLAGS(state.request),
+ 	     BOUNCE_ATTR(state.msg_attr));
+     } else {
+-	dsb_simple(why, "2.0.0", "delivered to mailbox");
++	dsb_simple(why, "2.0.0", "delivered to mailbox at %s", usr_attr.mailbox);
+ 	deliver_status = sent(BOUNCE_FLAGS(state.request),
+ 			      SENT_ATTR(state.msg_attr));
+     }
+Only in postfix-2.9.2/src/virtual: mailbox.c~
+diff -ur postfix-2.9.2.orig/src/virtual/maildir.c postfix-2.9.2/src/virtual/maildir.c
+--- postfix-2.9.2.orig/src/virtual/maildir.c	2012-07-12 04:50:17.558422836 +0200
++++ postfix-2.9.2/src/virtual/maildir.c	2012-07-12 04:49:00.618422835 +0200
+@@ -993,7 +993,7 @@
+                 (BOUNCE_FLAGS(state.request), BOUNCE_ATTR(state.msg_attr));
+     }
+     else {
+-        dsb_simple(why, "2.0.0", "delivered to maildir");
++        dsb_simple(why, "2.0.0", "delivered to maildir as %s", newfile);
+         deliver_status = sent(BOUNCE_FLAGS(state.request), SENT_ATTR(state.msg_attr));
+     }
+ 
+Only in postfix-2.9.2/src/virtual: maildir.c~
