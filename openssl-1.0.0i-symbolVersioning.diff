@@ -1,0 +1,44 @@
+diff -ruN openssl-1.0.0i.orig/Configure openssl-1.0.0i/Configure
+--- openssl-1.0.0i.orig/Configure	2012-03-03 08:48:21.000000000 -0500
++++ openssl-1.0.0i/Configure	2012-09-24 07:18:43.400391689 -0400
+@@ -1472,6 +1472,8 @@
+ 		}
+ 	}
+ 
++$shared_ldflag .= " -Wl,--version-script=openssl.ld";
++
+ open(IN,'<Makefile.org') || die "unable to read Makefile.org:$!\n";
+ unlink("$Makefile.new") || die "unable to remove old $Makefile.new:$!\n" if -e "$Makefile.new";
+ open(OUT,">$Makefile.new") || die "unable to create $Makefile.new:$!\n";
+diff -ruN openssl-1.0.0i.orig/engines/openssl.ld openssl-1.0.0i/engines/openssl.ld
+--- openssl-1.0.0i.orig/engines/openssl.ld	1969-12-31 19:00:00.000000000 -0500
++++ openssl-1.0.0i/engines/openssl.ld	2012-09-24 07:18:43.400391689 -0400
+@@ -0,0 +1,4 @@
++OPENSSL_1.0.0 {
++	 global:
++		 *;
++};
+diff -ruN openssl-1.0.0i.orig/Makefile openssl-1.0.0i/Makefile
+--- openssl-1.0.0i.orig/Makefile	2012-04-19 07:53:54.000000000 -0400
++++ openssl-1.0.0i/Makefile	2012-09-24 07:20:06.115811139 -0400
+@@ -148,9 +148,9 @@
+ LIBS=   libcrypto.a libssl.a
+ SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
+ SHARED_SSL=libssl$(SHLIB_EXT)
+-SHARED_LIBS=
+-SHARED_LIBS_LINK_EXTS=
+-SHARED_LDFLAGS=
++SHARED_LIBS=$(SHARED_FIPS) $(SHARED_CRYPTO) $(SHARED_SSL)
++SHARED_LIBS_LINK_EXTS=.so.$(SHLIB_MAJOR) .so
++SHARED_LDFLAGS=-Wl,--version-script=openssl.ld
+ 
+ GENERAL=        Makefile
+ BASENAME=       openssl
+diff -ruN openssl-1.0.0i.orig/openssl.ld openssl-1.0.0i/openssl.ld
+--- openssl-1.0.0i.orig/openssl.ld	1969-12-31 19:00:00.000000000 -0500
++++ openssl-1.0.0i/openssl.ld	2012-09-24 07:18:43.400391689 -0400
+@@ -0,0 +1,4 @@
++OPENSSL_1.0.0 {
++	 global:
++		 *;
++};
