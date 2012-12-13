@@ -1,0 +1,81 @@
+diff -ur ganglia-3.4.0.orig/libmetrics/linux/metrics.c ganglia-3.4.0/libmetrics/linux/metrics.c
+--- ganglia-3.4.0.orig/libmetrics/linux/metrics.c	2012-05-02 20:20:36.000000000 +0000
++++ ganglia-3.4.0/libmetrics/linux/metrics.c	2012-12-13 21:13:20.000000000 +0000
+@@ -29,10 +29,10 @@
+ typedef struct net_dev_stats net_dev_stats;
+ struct net_dev_stats {
+   char *name;
+-  unsigned long rpi;
+-  unsigned long rpo;
+-  unsigned long rbi;
+-  unsigned long rbo;
++  unsigned long long rpi;
++  unsigned long long rpo;
++  unsigned long long rbi;
++  unsigned long long rbo;
+   net_dev_stats *next;
+ };
+ #define NHASH 101
+@@ -147,8 +147,8 @@
+    char *p;
+    int i;
+    static struct timeval stamp={0,0};
+-   unsigned long rbi=0, rbo=0, rpi=0, rpo=0;
+-   unsigned long l_bytes_in=0, l_bytes_out=0, l_pkts_in=0, l_pkts_out=0;
++   unsigned long long rbi=0, rbo=0, rpi=0, rpo=0;
++   unsigned long long l_bytes_in=0, l_bytes_out=0, l_pkts_in=0, l_pkts_out=0;
+    double l_bin, l_bout, l_pin, l_pout;
+    net_dev_stats *ns;
+    float t;
+@@ -191,21 +191,21 @@
+                     if ( !ns ) return;
+ 
+                     /* receive */
+-                    rbi = strtoul(p, &p ,10);
++                    rbi = strtoull(p, &p ,10);
+                     if ( rbi >= ns->rbi ) {
+                        l_bytes_in += rbi - ns->rbi;
+                     } else {
+                        debug_msg("update_ifdata(%s) - Overflow in rbi: %lu -> %lu",caller,ns->rbi,rbi);
+-                       l_bytes_in += ULONG_MAX - ns->rbi + rbi;
++                       l_bytes_in += ULLONG_MAX - ns->rbi + rbi;
+                     }
+                     ns->rbi = rbi;
+ 
+-                    rpi = strtoul(p, &p ,10);
++                    rpi = strtoull(p, &p ,10);
+                     if ( rpi >= ns->rpi ) {
+                        l_pkts_in += rpi - ns->rpi;
+                     } else {
+                        debug_msg("updata_ifdata(%s) - Overflow in rpi: %lu -> %lu",caller,ns->rpi,rpi);
+-                       l_pkts_in += ULONG_MAX - ns->rpi + rpi;
++                       l_pkts_in += ULLONG_MAX - ns->rpi + rpi;
+                     }
+                     ns->rpi = rpi;
+ 
+@@ -213,21 +213,21 @@
+                     for (i = 0; i < 6; i++) rbo = strtoul(p, &p, 10);
+ 
+                     /* transmit */
+-                    rbo = strtoul(p, &p ,10);
++                    rbo = strtoull(p, &p ,10);
+                     if ( rbo >= ns->rbo ) {
+                        l_bytes_out += rbo - ns->rbo;
+                     } else {
+                        debug_msg("update_ifdata(%s) - Overflow in rbo: %lu -> %lu",caller,ns->rbo,rbo);
+-                       l_bytes_out += ULONG_MAX - ns->rbo + rbo;
++                       l_bytes_out += ULLONG_MAX - ns->rbo + rbo;
+                     }
+                     ns->rbo = rbo;
+ 
+-                    rpo = strtoul(p, &p ,10);
++                    rpo = strtoull(p, &p ,10);
+                     if ( rpo >= ns->rpo ) {
+                        l_pkts_out += rpo - ns->rpo;
+                     } else {
+                        debug_msg("update_ifdata(%s) - Overflow in rpo: %lu -> %lu",caller,ns->rpo,rpo);
+-                       l_pkts_out += ULONG_MAX - ns->rpo + rpo;
++                       l_pkts_out += ULLONG_MAX - ns->rpo + rpo;
+                     }
+                     ns->rpo = rpo;
+                   }

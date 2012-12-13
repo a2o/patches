@@ -1,0 +1,14 @@
+diff -ur ganglia-3.4.0.orig/libmetrics/linux/metrics.c ganglia-3.4.0/libmetrics/linux/metrics.c
+--- ganglia-3.4.0.orig/libmetrics/linux/metrics.c	2012-05-02 20:20:36.000000000 +0000
++++ ganglia-3.4.0/libmetrics/linux/metrics.c	2012-12-13 21:07:56.000000000 +0000
+@@ -180,8 +180,8 @@
+ 
+               p = index(p, ':');
+ 
+-              /* Ignore 'lo' and 'bond*' interfaces (but sanely) */
+-              if (p && strncmp (src, "lo", 2) &&
++              /* Ignore 'lo', 'br*' and 'bond*' interfaces (but sanely) */
++              if (p && strncmp (src, "lo", 2) && strncmp (src, "br", 2) &&
+                   strncmp (src, "bond", 4))
+                  {
+                     p++;
