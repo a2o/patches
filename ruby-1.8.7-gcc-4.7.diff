@@ -1,0 +1,21 @@
+--- ext/dl/depend.orig	2013-03-25 01:26:33.623437068 +0000
++++ ext/dl/depend	2013-03-25 01:29:09.639445357 +0000
+@@ -32,15 +32,15 @@
+ 
+ call.func: $(srcdir)/mkcall.rb ./dlconfig.rb
+ 	@echo "Generating call.func"
+-	@$(RUBY) $(srcdir)/mkcall.rb > $@
++	@$(RUBY) $(srcdir)/mkcall.rb | tee $@
+ 
+ callback.func: $(srcdir)/mkcallback.rb ./dlconfig.rb
+ 	@echo "Generating callback.func"
+-	@$(RUBY) $(srcdir)/mkcallback.rb > $@
++	@$(RUBY) $(srcdir)/mkcallback.rb | tee $@
+ 
+ cbtable.func: $(srcdir)/mkcbtable.rb ./dlconfig.rb
+ 	@echo "Generating cbtable.func"
+-	@$(RUBY) $(srcdir)/mkcbtable.rb > $@
++	@$(RUBY) $(srcdir)/mkcbtable.rb | tee $@
+ 
+ debug:
+ 	$(MAKE) CPPFLAGS="$(CPPFLAGS) -DDEBUG"
