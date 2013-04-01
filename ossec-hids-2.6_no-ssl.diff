@@ -1,0 +1,20 @@
+diff -ur ossec-hids-2.6.dist/src/Makeall ossec-hids-2.6/src/Makeall
+--- ossec-hids-2.6.dist/src/Makeall	2011-07-11 19:36:58.000000000 +0000
++++ ossec-hids-2.6/src/Makeall	2013-03-31 18:40:27.528323352 +0000
+@@ -60,11 +60,11 @@
+     fi
+ 
+     # Checking for OpenSSLconf.h
+-    ls /usr/include/openssl/opensslconf.h > /dev/null 2>&1
+-    if [ $? = 0 ]; then
+-        echo "DEXTRA=-DUSE_OPENSSL" >> Config.OS
+-        echo "OPENSSLCMD=-lssl -lcrypto" >> Config.OS
+-    fi    
++#    ls /usr/include/openssl/opensslconf.h > /dev/null 2>&1
++#    if [ $? = 0 ]; then
++#        echo "DEXTRA=-DUSE_OPENSSL" >> Config.OS
++#        echo "OPENSSLCMD=-lssl -lcrypto" >> Config.OS
++#    fi    
+ 
+     # Checking for inotify
+     if [ "X$OS" = "XLinux" ]; then
