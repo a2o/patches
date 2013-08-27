@@ -1,0 +1,131 @@
+diff -urN nrpe-2.12/include/common.h nrpe-2.12.ipv6/include/common.h
+--- nrpe-2.12/include/common.h	2008-03-10 16:04:42.000000000 -0500
++++ nrpe-2.12.ipv6/include/common.h	2010-12-28 09:41:12.000000000 -0600
+@@ -45,6 +45,7 @@
+ #define MAX_FILENAME_LENGTH     256
+ 
+ #define MAX_HOST_ADDRESS_LENGTH	256	/* max size of a host address */
++#define MAX_IP_SIZE		128	/* max size of an ip address */
+ 
+ #define NRPE_HELLO_COMMAND      "_NRPE_CHECK"
+ 
+diff -urN nrpe-2.12/src/nrpe.c nrpe-2.12.ipv6/src/nrpe.c
+--- nrpe-2.12/src/nrpe.c	2008-03-10 16:04:43.000000000 -0500
++++ nrpe-2.12.ipv6/src/nrpe.c	2010-12-23 12:33:35.000000000 -0600
+@@ -50,7 +50,7 @@
+ char    config_file[MAX_INPUT_BUFFER]="nrpe.cfg";
+ int     log_facility=LOG_DAEMON;
+ int     server_port=DEFAULT_SERVER_PORT;
+-char    server_address[16]="0.0.0.0";
++char    server_address[40]="::";
+ int     socket_timeout=DEFAULT_SOCKET_TIMEOUT;
+ int     command_timeout=DEFAULT_COMMAND_TIMEOUT;
+ int     connection_timeout=DEFAULT_CONNECTION_TIMEOUT;
+@@ -694,8 +694,8 @@
+ 
+ /* wait for incoming connection requests */
+ void wait_for_connections(void){
+-	struct sockaddr_in myname;
+-	struct sockaddr_in *nptr;
++	struct sockaddr_in6 myname;
++	struct sockaddr_in6 *nptr;
+ 	struct sockaddr addr;
+ 	int rc;
+ 	int sock, new_sd;
+@@ -710,7 +710,7 @@
+ #endif
+ 
+ 	/* create a socket for listening */
+-	sock=socket(AF_INET,SOCK_STREAM,0);
++	sock=socket(AF_INET6,SOCK_STREAM,0);
+ 
+ 	/* exit if we couldn't create the socket */
+ 	if(sock<0){
+@@ -728,15 +728,14 @@
+ 		exit(STATE_UNKNOWN);
+ 	        }
+ 
+-	myname.sin_family=AF_INET;
+-	myname.sin_port=htons(server_port);
+- 	bzero(&myname.sin_zero,8);
++	myname.sin6_family=AF_INET6;
++	myname.sin6_port=htons(server_port);
+ 
+ 	/* what address should we bind to? */
+         if(!strlen(server_address))
+-		myname.sin_addr.s_addr=INADDR_ANY;
++		myname.sin6_addr=in6addr_any;
+ 
+-	else if(!my_inet_aton(server_address,&myname.sin_addr)){
++	else if(!inet_pton(AF_INET6,server_address,&myname.sin6_addr)){
+ 		syslog(LOG_ERR,"Server address is not a valid IP address\n");
+ 		exit(STATE_CRITICAL);
+                 }
+@@ -759,7 +758,7 @@
+ 		syslog(LOG_NOTICE,"Warning: Daemon is configured to accept command arguments from clients!");
+ #endif
+ 
+-	syslog(LOG_INFO,"Listening for connections on port %d\n",htons(myname.sin_port));
++	syslog(LOG_INFO,"Listening for connections on port %d\n",htons(myname.sin6_port));
+ 
+ 	if(allowed_hosts)
+ 		syslog(LOG_INFO,"Allowing connections from: %s\n",allowed_hosts);
+@@ -862,23 +861,26 @@
+ 					return;
+ 		                        }
+ 
+-				nptr=(struct sockaddr_in *)&addr;
++				nptr=(struct sockaddr_in6 *)&addr;
++
++				char nptr_host[MAX_IP_SIZE];
++				inet_ntop(AF_INET6, &nptr->sin6_addr, nptr_host, MAX_IP_SIZE);
+ 
+ 				/* log info to syslog facility */
+ 				if(debug==TRUE)
+-					syslog(LOG_DEBUG,"Connection from %s port %d",inet_ntoa(nptr->sin_addr),nptr->sin_port);
++					syslog(LOG_DEBUG,"Connection from %s port %d",nptr_host,nptr->sin6_port);
+ 
+                                 /* is this is a blessed machine? */
+ 				if(allowed_hosts){
+ 
+-					if(!is_an_allowed_host(inet_ntoa(nptr->sin_addr))){
++					if(!is_an_allowed_host(nptr_host)){
+ 
+                                                /* log error to syslog facility */
+-                                               syslog(LOG_ERR,"Host %s is not allowed to talk to us!",inet_ntoa(nptr->sin_addr));
++                                               syslog(LOG_ERR,"Host %s is not allowed to talk to us!", nptr_host);
+ 
+                                                /* log info to syslog facility */
+ 					       if(debug==TRUE)
+-						       syslog(LOG_DEBUG,"Connection from %s closed.",inet_ntoa(nptr->sin_addr));
++						       syslog(LOG_DEBUG,"Connection from %s closed.", nptr_host);
+ 
+ 					       /* close socket prior to exiting */
+                                                close(new_sd);
+@@ -918,7 +920,7 @@
+ 
+ 				/* log info to syslog facility */
+ 				if(debug==TRUE)
+-					syslog(LOG_DEBUG,"Connection from %s closed.",inet_ntoa(nptr->sin_addr));
++					syslog(LOG_DEBUG,"Connection from %s closed.", nptr_host);
+ 
+ 				/* close socket prior to exiting */
+ 				close(new_sd);
+@@ -987,13 +989,15 @@
+ 		save_connecting_host=strdup(connecting_host);
+ 		for(temp_ptr=strtok(temp_buffer,",");temp_ptr!=NULL;temp_ptr=strtok(NULL,",")){
+ 
+-			myhost=gethostbyname(temp_ptr);
++			myhost=gethostbyname2(temp_ptr, AF_INET6);
+ 			if(myhost!=NULL){
+ 
+ 				/* check all addresses for the host... */
+ 				for(pptr=myhost->h_addr_list;*pptr!=NULL;pptr++){
+ 					memcpy(&addr, *pptr, sizeof(addr));
+-					if(!strcmp(save_connecting_host, inet_ntoa(addr))){
++					char addr_p[MAX_IP_SIZE];
++					inet_ntop(AF_INET6, &addr, addr_p, MAX_IP_SIZE);
++					if(!strcmp(save_connecting_host, addr_p)){
+ 						result=1;
+ 						break;
+ 					        }
