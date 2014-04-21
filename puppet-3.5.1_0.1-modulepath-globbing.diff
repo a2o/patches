@@ -1,0 +1,17 @@
+--- lib/puppet/node/environment.rb.DIST	2014-04-21 05:54:46.000000000 +0000
++++ lib/puppet/node/environment.rb	2014-04-21 05:55:38.000000000 +0000
+@@ -404,7 +404,13 @@
+   end
+ 
+   def self.split_path(path_string)
+-    path_string.split(File::PATH_SEPARATOR)
++    globs = path_string.split(File::PATH_SEPARATOR)
++    dirs = []
++    globs.each do |glob|
++      globDirs = Dir.glob(glob)
++      dirs = dirs + globDirs
++    end
++    return dirs
+   end
+ 
+   def ==(other)
