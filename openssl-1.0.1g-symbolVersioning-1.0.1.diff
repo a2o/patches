@@ -1,0 +1,44 @@
+diff -urN openssl-1.0.1e.orig/Configure openssl-1.0.1e/Configure
+--- openssl-1.0.1e.orig/Configure	2013-02-11 15:26:04.000000000 +0000
++++ openssl-1.0.1e/Configure	2013-02-28 00:12:07.000000000 +0000
+@@ -1576,6 +1576,8 @@
+ 		}
+ 	}
+ 
++$shared_ldflag .= " -Wl,--version-script=openssl.ld";
++
+ open(IN,'<Makefile.org') || die "unable to read Makefile.org:$!\n";
+ unlink("$Makefile.new") || die "unable to remove old $Makefile.new:$!\n" if -e "$Makefile.new";
+ open(OUT,">$Makefile.new") || die "unable to create $Makefile.new:$!\n";
+diff -urN openssl-1.0.1e.orig/Makefile openssl-1.0.1e/Makefile
+--- openssl-1.0.1e.orig/Makefile	2013-02-11 15:26:04.000000000 +0000
++++ openssl-1.0.1e/Makefile	2013-02-28 00:12:07.000000000 +0000
+@@ -174,9 +174,9 @@
+ LIBS=   libcrypto.a libssl.a
+ SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
+ SHARED_SSL=libssl$(SHLIB_EXT)
+-SHARED_LIBS=
+-SHARED_LIBS_LINK_EXTS=
+-SHARED_LDFLAGS=
++SHARED_LIBS=$(SHARED_FIPS) $(SHARED_CRYPTO) $(SHARED_SSL)
++SHARED_LIBS_LINK_EXTS=.so.$(SHLIB_MAJOR) .so
++SHARED_LDFLAGS=-Wl,--version-script=openssl.ld
+ 
+ GENERAL=        Makefile
+ BASENAME=       openssl
+diff -urN openssl-1.0.1e.orig/engines/openssl.ld openssl-1.0.1e/engines/openssl.ld
+--- openssl-1.0.1e.orig/engines/openssl.ld	1970-01-01 00:00:00.000000000 +0000
++++ openssl-1.0.1e/engines/openssl.ld	2013-02-28 00:12:59.000000000 +0000
+@@ -0,0 +1,4 @@
++OPENSSL_1.0.1 {
++	 global:
++		 *;
++};
+diff -urN openssl-1.0.1e.orig/openssl.ld openssl-1.0.1e/openssl.ld
+--- openssl-1.0.1e.orig/openssl.ld	1970-01-01 00:00:00.000000000 +0000
++++ openssl-1.0.1e/openssl.ld	2013-02-28 00:12:49.000000000 +0000
+@@ -0,0 +1,4 @@
++OPENSSL_1.0.1 {
++	 global:
++		 *;
++};
