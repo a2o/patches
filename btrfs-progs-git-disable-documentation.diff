@@ -1,0 +1,15 @@
+diff --git a/btrfs-progs/Makefile b/btrfs-progs/Makefile.orig
+index 76565e8..e966e0c 100644
+--- a/btrfs-progs/Makefile
++++ b/btrfs-progs/Makefile.orig
+@@ -57,8 +57,8 @@ btrfs_image_libs = -lpthread
+ btrfs_fragment_libs = -lgd -lpng -ljpeg -lfreetype
+ 
+ SUBDIRS =
+-BUILDDIRS = $(patsubst %,build-%,$(SUBDIRS)) build-Documentation
+-INSTALLDIRS = $(patsubst %,install-%,$(SUBDIRS)) install-Documentation
++BUILDDIRS = $(patsubst %,build-%,$(SUBDIRS))
++INSTALLDIRS = $(patsubst %,install-%,$(SUBDIRS))
+ CLEANDIRS = $(patsubst %,clean-%,$(SUBDIRS))
+ 
+ .PHONY: $(SUBDIRS)
