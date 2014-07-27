@@ -1,0 +1,12 @@
+diff -ur ebtables-v2.0.10-4.DIST/Makefile ebtables-v2.0.10-4/Makefile
+--- ebtables-v2.0.10-4.DIST/Makefile	2011-12-15 20:02:47.000000000 +0000
++++ ebtables-v2.0.10-4/Makefile	2014-07-27 22:24:13.825132332 +0000
+@@ -17,7 +17,7 @@
+ SYSCONFIGDIR:=/etc/sysconfig
+ DESTDIR:=
+ 
+-CFLAGS:=-Wall -Wunused -Werror
++CFLAGS:=-Wall
+ CFLAGS_SH_LIB:=-fPIC -O3
+ CC:=gcc
+ 
