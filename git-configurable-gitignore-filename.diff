@@ -1,0 +1,56 @@
+diff --git a/cache.h b/cache.h
+index fcb511d..7f37595 100644
+--- a/cache.h
++++ b/cache.h
+@@ -1389,6 +1389,7 @@ extern int check_pager_config(const char *cmd);
+ 
+ extern const char *editor_program;
+ extern const char *askpass_program;
++extern const char *excludes_default_filename;
+ extern const char *excludes_file;
+ 
+ /* base85 */
+diff --git a/config.c b/config.c
+index 058505c..ed33e1d 100644
+--- a/config.c
++++ b/config.c
+@@ -832,6 +832,9 @@ static int git_default_core_config(const char *var, const char *value)
+ 	if (!strcmp(var, "core.askpass"))
+ 		return git_config_string(&askpass_program, var, value);
+ 
++	if (!strcmp(var, "core.excludesdefaultfilename"))
++		return git_config_string(&excludes_default_filename, var, value);
++
+ 	if (!strcmp(var, "core.excludesfile"))
+ 		return git_config_pathname(&excludes_file, var, value);
+ 
+diff --git a/dir.c b/dir.c
+index fcb6872..ea45d1a 100644
+--- a/dir.c
++++ b/dir.c
+@@ -1620,7 +1620,12 @@ void setup_standard_excludes(struct dir_struct *dir)
+ 	const char *path;
+ 	char *xdg_path;
+ 
+-	dir->exclude_per_dir = ".gitignore";
++	if (excludes_default_filename) {
++		dir->exclude_per_dir = excludes_default_filename;
++	} else {
++		dir->exclude_per_dir = ".gitignore";
++	}
++
+ 	path = git_path("info/exclude");
+ 	if (!excludes_file) {
+ 		home_config_paths(NULL, &xdg_path, "ignore");
+diff --git a/environment.c b/environment.c
+index 565f652..d174d20 100644
+--- a/environment.c
++++ b/environment.c
+@@ -43,6 +43,7 @@ const char *pager_program;
+ int pager_use_color = 1;
+ const char *editor_program;
+ const char *askpass_program;
++const char *excludes_default_filename;
+ const char *excludes_file;
+ enum auto_crlf auto_crlf = AUTO_CRLF_FALSE;
+ int check_replace_refs = 1;
