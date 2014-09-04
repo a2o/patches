@@ -1,0 +1,68 @@
+diff --git a/configure.ac b/configure.ac
+index cd05608..e48ca13 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -34,6 +34,7 @@ AC_FUNC_FORK
+ AC_FUNC_MALLOC
+ AC_FUNC_REALLOC
+ AC_FUNC_STRNLEN
++AC_CHECK_FUNC(accept4, AC_DEFINE(HAVE_ACCEPT4, 1, "Define if fchown() exists"))
+ AC_CHECK_FUNC(fchown, AC_DEFINE(HAVE_FCHOWN, 1, "Define if fchown() exists"), AC_MSG_ERROR(["fchown() not found"]))
+ AC_CHECK_FUNC(chmod, AC_DEFINE(HAVE_CHMOD, 1, "Define if chmod() exists"), AC_MSG_ERROR(["chmod() not found"]))
+ AC_CHECK_FUNC(fstat, AC_DEFINE(HAVE_FSTAT, 1, "Define if fstat() exists"), AC_MSG_ERROR(["fstat() not found"]))
+diff --git a/sock.c b/sock.c
+index 95e7ba5..964f9fe 100644
+--- a/sock.c
++++ b/sock.c
+@@ -89,6 +89,34 @@ process_sock(int fd)
+ 		non_root_clients++;
+ 	}
+ 
++#ifndef HAVE_ACCEPT4
++        /* don't leak fds when execing */
++        if (fcntl(cli_fd, F_SETFD, FD_CLOEXEC) < 0) {
++                close(cli_fd);
++                acpid_log(LOG_ERR, "fcntl() on client for FD_CLOEXEC: %s",
++                        strerror(errno));
++                return;
++        }
++
++        /* don't allow clients to block this */
++        if (fcntl(cli_fd, F_SETFL, O_NONBLOCK) < 0) {
++               close(cli_fd);
++               acpid_log(LOG_ERR, "fcntl() on client for O_NONBLOCK: %s",
++                        strerror(errno));
++               return;
++        }
++#endif
++
++    if(asprintf(&buf, "%d[%d:%d]", creds.pid, creds.uid, creds.gid) < 0) {
++        close(cli_fd);
++        acpid_log(LOG_ERR, "asprintf: %s", strerror(errno));
++        return;
++     }
++        acpid_add_client(cli_fd, buf);
++        free(buf);
++
++
++
+     if(asprintf(&buf, "%d[%d:%d]", creds.pid, creds.uid, creds.gid) < 0) {
+         close(cli_fd);
+         acpid_log(LOG_ERR, "asprintf: %s", strerror(errno));
+diff --git a/ud_socket.c b/ud_socket.c
+index 2790686..56e784a 100644
+--- a/ud_socket.c
++++ b/ud_socket.c
+@@ -86,7 +86,11 @@ ud_accept(int listenfd, struct ucred *cred)
+ 		struct sockaddr_un cliaddr;
+ 		socklen_t len = sizeof(struct sockaddr_un);
+ 
+-		newsock = TEMP_FAILURE_RETRY (accept4(listenfd, (struct sockaddr *)&cliaddr, &len, SOCK_CLOEXEC|SOCK_NONBLOCK));
++#ifdef HAVE_ACCEPT4
++                newsock = TEMP_FAILURE_RETRY (accept4(listenfd, (struct sockaddr *)&cliaddr, &len, SOCK_CLOEXEC|SOCK_NONBLOCK));
++#else
++                newsock = TEMP_FAILURE_RETRY (accept(listenfd, (struct sockaddr *)&cliaddr, &len));
++#endif
+ 		if (newsock < 0) {
+ 			return newsock;
+ 		}
