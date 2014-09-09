@@ -1,0 +1,16 @@
+diff -ur postfix-2.11.1.dist/src/util/dict.c postfix-2.11.1/src/util/dict.c
+--- postfix-2.11.1.dist/src/util/dict.c	2013-11-20 15:31:49.000000000 +0000
++++ postfix-2.11.1/src/util/dict.c	2014-09-09 17:46:22.261292915 +0000
+@@ -456,10 +456,12 @@
+ 		      err, STR(buf));
+ 	if (msg_verbose > 1)
+ 	    msg_info("%s: %s = %s", myname, member, val);
++/*
+ 	if ((old = dict->lookup(dict, member)) != 0
+ 	    && strcmp(old, val) != 0)
+ 	    msg_warn("%s, line %d: overriding earlier entry: %s=%s",
+ 		     VSTREAM_PATH(fp), lineno, member, old);
++*/
+ 	if (dict->update(dict, member, val) != 0)
+ 	    msg_fatal("%s, line %d: unable to update %s:%s",
+ 		      VSTREAM_PATH(fp), lineno, dict->type, dict->name);
