@@ -1,0 +1,13 @@
+diff -ur ganglia-3.6.0.dist//libmetrics/linux/metrics.c ganglia-3.6.0/libmetrics/linux/metrics.c
+--- ganglia-3.6.0.dist//libmetrics/linux/metrics.c	2013-05-07 14:39:40.000000000 +0000
++++ ganglia-3.6.0/libmetrics/linux/metrics.c	2014-10-07 15:39:33.874325481 +0000
+@@ -247,7 +247,9 @@
+                  
+               /* Ignore 'lo' and 'bond*' interfaces (but sanely) */
+               /* l.flis: skip vlan interfaces to avoid double counting*/
++              /* B.Skufca: ignore bridged interfaces too */
+               if (p && strncmp (src, "lo", 2) &&
++                  strncmp (src, "br", 2) &&
+                   strncmp (src, "bond", 4) && !vlan)
+                  {
+                     p++;

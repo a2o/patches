@@ -1,0 +1,11 @@
+--- lib/puppet/settings/path_setting.rb.DIST	2015-03-07 00:45:44.183384082 +0000
++++ lib/puppet/settings/path_setting.rb		2015-03-07 00:50:15.009365416 +0000
+@@ -1,7 +1,7 @@
+ class Puppet::Settings::PathSetting < Puppet::Settings::StringSetting
+   def munge(value)
+     if value.is_a?(String)
+-      value = value.split(File::PATH_SEPARATOR).map { |d| File.expand_path(d) }.join(File::PATH_SEPARATOR)
++      value = value.split(File::PATH_SEPARATOR).map { |d| File.expand_path(d) }.map { |d| Dir.glob(d) }.join(File::PATH_SEPARATOR)
+     end
+     value
+   end
