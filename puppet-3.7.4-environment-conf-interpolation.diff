@@ -1,0 +1,11 @@
+--- lib/puppet/settings.rb.DIST	2015-03-08 23:26:56.792628995 +0000
++++ lib/puppet/settings.rb	2015-03-08 23:36:50.313658881 +0000
+@@ -1263,7 +1263,7 @@
+   # @api public
+   class ChainedValues
+     ENVIRONMENT_SETTING = "environment".freeze
+-    ENVIRONMENT_INTERPOLATION_ALLOWED = ['config_version'].freeze
++    ENVIRONMENT_INTERPOLATION_ALLOWED = ['config_version', 'manifest', 'modulepath'].freeze
+ 
+     # @see Puppet::Settings.values
+     # @api private

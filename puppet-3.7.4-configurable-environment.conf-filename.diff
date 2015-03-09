@@ -1,0 +1,29 @@
+--- lib/puppet/defaults.rb.DIST	2015-03-08 23:41:58.958995129 +0000
++++ lib/puppet/defaults.rb	2015-03-09 00:14:28.279472943 +0000
+@@ -260,6 +260,15 @@
+         http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+       :type    => :path,
+     },
++    :environment_conf_filename => {
++      :default => "environment.conf",
++      :desc    => "File name for environment configuration. Expects single filename.
++        Value is appended to directory path that corresponds to current environment.
++
++        Changing this value is requires in-depth understanding of puppet operation.
++        You are strongly advised against doing that, unless you know better.",
++      :type    => :string,
++    },
+     :always_cache_features => {
+       :type     => :boolean,
+       :default  => false,
+--- lib/puppet/settings/environment_conf.rb.DIST	2015-03-08 23:55:45.226504435 +0000
++++ lib/puppet/settings/environment_conf.rb	2015-03-09 00:23:07.621615480 +0000
+@@ -19,7 +19,7 @@
+   # @return [EnvironmentConf] the parsed EnvironmentConf object
+   def self.load_from(path_to_env, global_module_path)
+     path_to_env = File.expand_path(path_to_env)
+-    conf_file = File.join(path_to_env, 'environment.conf')
++    conf_file = File.join(path_to_env, Puppet.settings.value(:environment_conf_filename))
+     config = nil
+ 
+     begin
