@@ -5,8 +5,8 @@ diff -ur puppet-3.7.5.DIST/lib/puppet/defaults.rb puppet-3.7.5.PATCHED/lib/puppe
            all files referenced with `import` statements to exist. This setting was primarily
            designed for use with commit hooks for parse-checking.",
      },
-+    :environment_terminus => {
-+        :type       => :terminus,
++    :environment_locator => {
++        :type       => :string,
 +        :default    => "direnv",
 +        :desc       => "How to locate environments.
 +
@@ -15,15 +15,15 @@ diff -ur puppet-3.7.5.DIST/lib/puppet/defaults.rb puppet-3.7.5.PATCHED/lib/puppe
 +            - 'exec'  : (use external program to find environments)
 +            - 'legacy': legacy environment configuration (environments listed in puppet.conf)",
 +    },
-+    :external_environments => {
++    :external_environment_locator => {
 +        :default  => "none",
 +        :desc     => "An external command that can produce environment information.
 +            The command's output must be a YAML dump of a hash, and that hash must
 +            have a `found` key (boolean) that indicates whether environment has
 +            been found, and if found, `path` key must exist which informs puppet
-+            where data for specified environment resides.
-+            For unknown environments, the command should return YAML hash with only
-+            `found` key set to false, and use zero as exit status.
++            where data for specified environment reside.
++            For unknown environments, the command should return YAML hash with the
++            key `found` set to false, and use zero as exit status.
 +
 +            This command makes it straightforward to store your environment mapping
 +            information in other data sources like databases or git repository.",
@@ -49,8 +49,8 @@ diff -ur puppet-3.7.5.DIST/lib/puppet/environments.rb puppet-3.7.5.PATCHED/lib/p
 +  class Exec
 +    include EnvironmentLoader
 +
-+    def initialize(external_environments, global_module_path)
-+      @external_environments = external_environments
++    def initialize(external_environment_locator, global_module_path)
++      @external_environment_locator = external_environment_locator
 +      @global_module_path = global_module_path
 +    end
 +
@@ -59,7 +59,7 @@ diff -ur puppet-3.7.5.DIST/lib/puppet/environments.rb puppet-3.7.5.PATCHED/lib/p
 +      envData = get_env_data(name)
 +      if (envData[:found] == true) then
 +        if valid_directory?(envData[:path])
-+          Puppet.notice("External environments: environment #{name} found at #{envData[:path]}")
++          Puppet.notice("External environment locator: environment #{name} found at #{envData[:path]}")
 +          create_environment(name)
 +        end
 +      end
@@ -82,8 +82,8 @@ diff -ur puppet-3.7.5.DIST/lib/puppet/environments.rb puppet-3.7.5.PATCHED/lib/p
 +
 +    def get_env_data(name)
 +      # Check configuration
-+      external_command = @external_environments.split
-+      raise ArgumentError, "You must set the 'external_environments' parameter to use the external environment terminus" unless external_command != "none"
++      external_command = @external_environment_locator.split
++      raise ArgumentError, "You must set the 'external_environment_locator' parameter to use the external environment locator" unless external_command != "none"
 +
 +      # Make sure it's an array
 +      raise Puppet::DevError, "Exec commands must be an array" unless external_command.is_a?(Array)
@@ -167,7 +167,7 @@ diff -ur puppet-3.7.5.DIST/lib/puppet.rb puppet-3.7.5.PATCHED/lib/puppet.rb
    def self.base_context(settings)
 -    environments = settings[:environmentpath]
 -    modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
-+    environment_terminus = settings[:environment_terminus]
++    environment_locator = settings[:environment_locator]
  
 -    if environments.empty?
 -      loaders = [Puppet::Environments::Legacy.new]
@@ -182,17 +182,17 @@ diff -ur puppet-3.7.5.DIST/lib/puppet.rb puppet-3.7.5.PATCHED/lib/puppet.rb
 -                                           [],
 -                                           Puppet::Node::Environment::NO_MANIFEST))
 -      end
-+    case environment_terminus
-+      when :direnv, :exec
-+        if (:direnv == environment_terminus)
++    case environment_locator
++      when "direnv", "exec"
++        if ("direnv" == environment_locator)
 +          environments = settings[:environmentpath]
 +          modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
 +
 +          loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
 +
-+        elsif (:exec == environment_terminus)
++        elsif ("exec" == environment_locator)
 +          modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
-+          loaders = [Puppet::Environments::Exec.new(settings[:external_environments], modulepath)]
++          loaders = [Puppet::Environments::Exec.new(settings[:external_environment_locator], modulepath)]
 +
 +        else
 +          raise Puppet::Error, "Internal error"
@@ -208,11 +208,11 @@ diff -ur puppet-3.7.5.DIST/lib/puppet.rb puppet-3.7.5.PATCHED/lib/puppet.rb
 +                                             Puppet::Node::Environment::NO_MANIFEST))
 +        end
 +
-+      when :legacy
++      when "legacy"
 +        loaders = [Puppet::Environments::Legacy.new]
 +
 +      else
-+        raise Puppet::Error, "Invalid environment_terminus configuration value: #{environment_terminus}"
++        raise Puppet::Error, "Invalid environment_locator configuration value: #{environment_locator}"
      end
  
      {

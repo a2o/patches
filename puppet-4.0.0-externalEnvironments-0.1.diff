@@ -25,9 +25,9 @@ index 5cd6fff..96b4a75 100644
 +    # Common for all environment locators
 +    modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
 +
-+    environment_terminus = settings[:environment_terminus]
-+    case environment_terminus
-+      when :direnv
++    environment_locator = settings[:environment_locator]
++    case environment_locator
++      when "direnv"
 +          environments = settings[:environmentpath]
 +
 +          if environmentpath.nil? || environmentpath.empty?
@@ -36,11 +36,11 @@ index 5cd6fff..96b4a75 100644
 +
 +          loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
 +
-+      when :exec
-+          loaders = [Puppet::Environments::Exec.new(settings[:external_environments], modulepath)]
++      when "exec"
++          loaders = [Puppet::Environments::Exec.new(settings[:external_environment_locator], modulepath)]
 +
 +      else
-+        raise Puppet::Error, "Invalid environment_terminus configuration value: #{environment_terminus}"
++        raise Puppet::Error, "Invalid environment_locator configuration value: #{environment_locator}"
 +    end
 +
 +    # in case the configured environment (used for the default sometimes)
@@ -58,29 +58,28 @@ diff --git a/lib/puppet/defaults.rb b/lib/puppet/defaults.rb
 index afbe081..1722d83 100644
 --- a/lib/puppet/defaults.rb
 +++ b/lib/puppet/defaults.rb
-@@ -255,6 +255,29 @@ module Puppet
+@@ -255,6 +255,28 @@ module Puppet
          $LOAD_PATH << value
        end
      },
-+    :environment_terminus => {
-+        :type       => :terminus,
++    :environment_locator => {
++        :type       => :string,
 +        :default    => "direnv",
 +        :desc       => "How to locate environments.
 +
 +            Possible values are:
 +            - 'direnv': directory environments (default)
 +            - 'exec'  : (use external program to find environments)
-+            - 'legacy': legacy environment configuration (environments listed in puppet.conf)",
 +    },
-+    :external_environments => {
++    :external_environment_locator => {
 +        :default  => "none",
 +        :desc     => "An external command that can produce environment information.
 +            The command's output must be a YAML dump of a hash, and that hash must
 +            have a `found` key (boolean) that indicates whether environment has
 +            been found, and if found, `path` key must exist which informs puppet
-+            where data for specified environment resides.
-+            For unknown environments, the command should return YAML hash with only
-+            `found` key set to false, and use zero as exit status.
++            where data for specified environment reside.
++            For unknown environments, the command should return YAML hash with the
++            key `found` set to false, and use zero as exit status.
 +
 +            This command makes it straightforward to store your environment mapping
 +            information in other data sources like databases or git repository.",
@@ -107,8 +106,8 @@ index 03d3e89..76d0efb 100644
 +  class Exec
 +    include EnvironmentLoader
 +
-+    def initialize(external_environments, global_module_path)
-+      @external_environments = external_environments
++    def initialize(external_environment_locator, global_module_path)
++      @external_environment_locator = external_environment_locator
 +      @global_module_path = global_module_path
 +    end
 +
@@ -140,8 +139,8 @@ index 03d3e89..76d0efb 100644
 +
 +    def get_env_data(name)
 +      # Check configuration
-+      external_command = @external_environments.split
-+      raise ArgumentError, "You must set the 'external_environments' parameter to use the external environment terminus" unless external_command != "none"
++      external_command = @external_environment_locator.split
++      raise ArgumentError, "You must set the 'external_environment_locator' parameter to use the external environment locator" unless external_command != "none"
 +
 +      # Make sure it's an array
 +      raise Puppet::DevError, "Exec commands must be an array" unless external_command.is_a?(Array)
