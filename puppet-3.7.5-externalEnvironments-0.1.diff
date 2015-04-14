@@ -11,9 +11,9 @@ diff -ur puppet-3.7.5.DIST/lib/puppet/defaults.rb puppet-3.7.5.PATCHED/lib/puppe
 +        :desc       => "How to locate environments.
 +
 +            Possible values are:
-+            - 'direnv': directory environments (default)
-+            - 'exec'  : (use external program to find environments)
-+            - 'legacy': legacy environment configuration (environments listed in puppet.conf)",
++            - 'direnv'  : directory environments (default)
++            - 'external': (use external program to find environments)
++            - 'legacy'  : legacy environment configuration (environments listed in puppet.conf)",
 +    },
 +    :external_environment_locator => {
 +        :default  => "none",
@@ -183,14 +183,14 @@ diff -ur puppet-3.7.5.DIST/lib/puppet.rb puppet-3.7.5.PATCHED/lib/puppet.rb
 -                                           Puppet::Node::Environment::NO_MANIFEST))
 -      end
 +    case environment_locator
-+      when "direnv", "exec"
++      when "direnv", "external"
 +        if ("direnv" == environment_locator)
 +          environments = settings[:environmentpath]
 +          modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
 +
 +          loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
 +
-+        elsif ("exec" == environment_locator)
++        elsif ("external" == environment_locator)
 +          modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
 +          loaders = [Puppet::Environments::Exec.new(settings[:external_environment_locator], modulepath)]
 +

@@ -36,7 +36,7 @@ index 5cd6fff..96b4a75 100644
 +
 +          loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
 +
-+      when "exec"
++      when "external"
 +          loaders = [Puppet::Environments::Exec.new(settings[:external_environment_locator], modulepath)]
 +
 +      else
@@ -68,8 +68,8 @@ index afbe081..1722d83 100644
 +        :desc       => "How to locate environments.
 +
 +            Possible values are:
-+            - 'direnv': directory environments (default)
-+            - 'exec'  : (use external program to find environments)
++            - 'direnv'  : directory environments (default)
++            - 'external': (use external program to find environments)
 +    },
 +    :external_environment_locator => {
 +        :default  => "none",
