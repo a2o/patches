@@ -1,0 +1,218 @@
+diff -ur puppet-3.7.5.DIST/lib/puppet/defaults.rb puppet-3.7.5.PATCHED/lib/puppet/defaults.rb
+--- puppet-3.7.5.DIST/lib/puppet/defaults.rb	2015-03-25 16:32:47.000000000 +0000
++++ puppet-3.7.5.PATCHED/lib/puppet/defaults.rb	2015-04-13 20:25:20.924188182 +0000
+@@ -242,6 +242,29 @@
+           all files referenced with `import` statements to exist. This setting was primarily
+           designed for use with commit hooks for parse-checking.",
+     },
++    :environment_terminus => {
++        :type       => :terminus,
++        :default    => "direnv",
++        :desc       => "How to locate environments.
++
++            Possible values are:
++            - 'direnv': directory environments (default)
++            - 'exec'  : (use external program to find environments)
++            - 'legacy': legacy environment configuration (environments listed in puppet.conf)",
++    },
++    :external_environments => {
++        :default  => "none",
++        :desc     => "An external command that can produce environment information.
++            The command's output must be a YAML dump of a hash, and that hash must
++            have a `found` key (boolean) that indicates whether environment has
++            been found, and if found, `path` key must exist which informs puppet
++            where data for specified environment resides.
++            For unknown environments, the command should return YAML hash with only
++            `found` key set to false, and use zero as exit status.
++
++            This command makes it straightforward to store your environment mapping
++            information in other data sources like databases or git repository.",
++    },
+     :environment => {
+         :default  => "production",
+         :desc     => "The environment Puppet is running in.  For clients
+diff -ur puppet-3.7.5.DIST/lib/puppet/environments.rb puppet-3.7.5.PATCHED/lib/puppet/environments.rb
+--- puppet-3.7.5.DIST/lib/puppet/environments.rb	2015-03-25 16:32:47.000000000 +0000
++++ puppet-3.7.5.PATCHED/lib/puppet/environments.rb	2015-04-13 20:25:20.924188182 +0000
+@@ -272,6 +272,123 @@
+     end
+   end
+ 
++
++
++  # Reads environment data from external program, and uses that.
++  #
++  # External program must provide data in YAML format. See file
++  # defaults.rb for details.
++  #
++  # @api private
++  class Exec
++    include EnvironmentLoader
++
++    def initialize(external_environments, global_module_path)
++      @external_environments = external_environments
++      @global_module_path = global_module_path
++    end
++
++    # @!macro loader_get
++    def get(name)
++      envData = get_env_data(name)
++      if (envData[:found] == true) then
++        if valid_directory?(envData[:path])
++          Puppet.notice("External environments: environment #{name} found at #{envData[:path]}")
++          create_environment(name)
++        end
++      end
++    end
++
++    # @!macro loader_get_conf
++    def get_conf(name)
++      envData = get_env_data(name)
++      if (envData[:found] == true) then
++        if valid_directory?(envData[:path])
++          return Puppet::Settings::EnvironmentConf.load_from(envData[:path], @global_module_path)
++        end
++      end
++      nil
++    end
++
++
++    private
++
++
++    def get_env_data(name)
++      # Check configuration
++      external_command = @external_environments.split
++      raise ArgumentError, "You must set the 'external_environments' parameter to use the external environment terminus" unless external_command != "none"
++
++      # Make sure it's an array
++      raise Puppet::DevError, "Exec commands must be an array" unless external_command.is_a?(Array)
++
++      # Make sure it's fully qualified.
++      raise ArgumentError, "You must set the exec parameter to a fully qualified command" unless Puppet::Util.absolute_path?(external_command[0])
++
++      # Add our name to it.
++      external_command << name
++      begin
++        output = execute(external_command, :failonfail => true, :combine => false)
++      rescue Puppet::ExecutionFailure => detail
++        raise Puppet::Error, "Failed to find environment #{name} via exec: #{detail}", detail.backtrace
++      end
++
++      if output =~ /\A\s*\Z/ # all whitespace
++        Puppet.debug "Empty response for environment #{name} from #{self.name} terminus"
++        return nil
++      else
++        return translate(name, output)
++      end
++    end
++
++
++    # Proxy the execution, so it's easier to test.
++    def execute(command, arguments)
++      Puppet::Util::Execution.execute(command,arguments)
++    end
++
++
++    # Translate the yaml string into Ruby objects.
++    def translate(name, output)
++      YAML.load(output).inject({}) do |hash, data|
++        case data[0]
++        when String
++          hash[data[0].intern] = data[1]
++        when Symbol
++          hash[data[0]] = data[1]
++        else
++          raise Puppet::Error, "key is a #{data[0].class}, not a string or symbol"
++        end
++
++        hash
++      end
++
++    rescue => detail
++        raise Puppet::Error, "Could not load external environment data for #{name}: #{detail}", detail.backtrace
++    end
++
++
++    def valid_directory?(envdir)
++      name = Puppet::FileSystem.basename_string(envdir)
++      Puppet::FileSystem.directory?(envdir) &&
++         Puppet::Node::Environment.valid_name?(name)
++    end
++
++
++    def create_environment(name, setting_values = nil)
++      env_symbol = name.intern
++      setting_values = Puppet.settings.values(env_symbol, Puppet.settings.preferred_run_mode)
++      Puppet::Node::Environment.create(
++        env_symbol,
++        Puppet::Node::Environment.split_path(setting_values.interpolate(:modulepath)),
++        setting_values.interpolate(:manifest),
++        setting_values.interpolate(:config_version)
++      )
++    end
++  end
++
++
++
+   # Combine together multiple loaders to act as one.
+   # @api private
+   class Combined
+diff -ur puppet-3.7.5.DIST/lib/puppet.rb puppet-3.7.5.PATCHED/lib/puppet.rb
+--- puppet-3.7.5.DIST/lib/puppet.rb	2015-03-25 16:32:47.000000000 +0000
++++ puppet-3.7.5.PATCHED/lib/puppet.rb	2015-04-13 20:25:36.513979874 +0000
+@@ -178,22 +178,39 @@
+   # The bindings used for initialization of puppet
+   # @api private
+   def self.base_context(settings)
+-    environments = settings[:environmentpath]
+-    modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
++    environment_terminus = settings[:environment_terminus]
+ 
+-    if environments.empty?
+-      loaders = [Puppet::Environments::Legacy.new]
+-    else
+-      loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
+-      # in case the configured environment (used for the default sometimes)
+-      # doesn't exist
+-      default_environment = Puppet[:environment].to_sym
+-      if default_environment == :production
+-        loaders << Puppet::Environments::StaticPrivate.new(
+-          Puppet::Node::Environment.create(Puppet[:environment].to_sym,
+-                                           [],
+-                                           Puppet::Node::Environment::NO_MANIFEST))
+-      end
++    case environment_terminus
++      when :direnv, :exec
++        if (:direnv == environment_terminus)
++          environments = settings[:environmentpath]
++          modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
++
++          loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
++
++        elsif (:exec == environment_terminus)
++          modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
++          loaders = [Puppet::Environments::Exec.new(settings[:external_environments], modulepath)]
++
++        else
++          raise Puppet::Error, "Internal error"
++        end
++
++        # in case the configured environment (used for the default sometimes)
++        # doesn't exist
++        default_environment = Puppet[:environment].to_sym
++        if default_environment == :production
++          loaders << Puppet::Environments::StaticPrivate.new(
++            Puppet::Node::Environment.create(Puppet[:environment].to_sym,
++                                             [],
++                                             Puppet::Node::Environment::NO_MANIFEST))
++        end
++
++      when :legacy
++        loaders = [Puppet::Environments::Legacy.new]
++
++      else
++        raise Puppet::Error, "Invalid environment_terminus configuration value: #{environment_terminus}"
+     end
+ 
+     {
