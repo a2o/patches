@@ -1,7 +1,68 @@
-diff -ur puppet-3.7.5.DIST/lib/puppet/defaults.rb puppet-3.7.5.PATCHED/lib/puppet/defaults.rb
---- puppet-3.7.5.DIST/lib/puppet/defaults.rb	2015-03-25 16:32:47.000000000 +0000
-+++ puppet-3.7.5.PATCHED/lib/puppet/defaults.rb	2015-04-13 20:25:20.924188182 +0000
-@@ -242,6 +242,29 @@
+diff --git a/lib/puppet.rb b/lib/puppet.rb
+index 954dcbc..6bd1c7b 100644
+--- a/lib/puppet.rb
++++ b/lib/puppet.rb
+@@ -178,22 +178,39 @@ module Puppet
+   # The bindings used for initialization of puppet
+   # @api private
+   def self.base_context(settings)
+-    environments = settings[:environmentpath]
+-    modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
+-
+-    if environments.empty?
+-      loaders = [Puppet::Environments::Legacy.new]
+-    else
+-      loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
+-      # in case the configured environment (used for the default sometimes)
+-      # doesn't exist
+-      default_environment = Puppet[:environment].to_sym
+-      if default_environment == :production
+-        loaders << Puppet::Environments::StaticPrivate.new(
+-          Puppet::Node::Environment.create(Puppet[:environment].to_sym,
+-                                           [],
+-                                           Puppet::Node::Environment::NO_MANIFEST))
+-      end
++    environment_locator = settings[:environment_locator]
++
++    case environment_locator
++      when "direnv", "external"
++        if ("direnv" == environment_locator)
++          environments = settings[:environmentpath]
++          modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
++
++          loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
++
++        elsif ("external" == environment_locator)
++          modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
++          loaders = [Puppet::Environments::Exec.new(settings[:external_environment_locator], modulepath)]
++
++        else
++          raise Puppet::Error, "Internal error"
++        end
++
++        # in case the configured environment (used for the default sometimes)
++        # doesn't exist
++        default_environment = Puppet[:environment].to_sym
++        if default_environment == :production
++          loaders << Puppet::Environments::StaticPrivate.new(
++            Puppet::Node::Environment.create(Puppet[:environment].to_sym,
++                                             [],
++                                             Puppet::Node::Environment::NO_MANIFEST))
++        end
++
++      when "legacy"
++        loaders = [Puppet::Environments::Legacy.new]
++
++      else
++        raise Puppet::Error, "Invalid environment_locator configuration value: #{environment_locator}"
+     end
+ 
+     {
+diff --git a/lib/puppet/defaults.rb b/lib/puppet/defaults.rb
+index abbc728..26365d0 100644
+--- a/lib/puppet/defaults.rb
++++ b/lib/puppet/defaults.rb
+@@ -242,6 +242,29 @@ module Puppet
            all files referenced with `import` statements to exist. This setting was primarily
            designed for use with commit hooks for parse-checking.",
      },
@@ -31,10 +92,11 @@ diff -ur puppet-3.7.5.DIST/lib/puppet/defaults.rb puppet-3.7.5.PATCHED/lib/puppe
      :environment => {
          :default  => "production",
          :desc     => "The environment Puppet is running in.  For clients
-diff -ur puppet-3.7.5.DIST/lib/puppet/environments.rb puppet-3.7.5.PATCHED/lib/puppet/environments.rb
---- puppet-3.7.5.DIST/lib/puppet/environments.rb	2015-03-25 16:32:47.000000000 +0000
-+++ puppet-3.7.5.PATCHED/lib/puppet/environments.rb	2015-04-13 20:25:20.924188182 +0000
-@@ -272,6 +272,123 @@
+diff --git a/lib/puppet/environments.rb b/lib/puppet/environments.rb
+index 0b2aa51..95a7bd3 100644
+--- a/lib/puppet/environments.rb
++++ b/lib/puppet/environments.rb
+@@ -272,6 +272,123 @@ module Puppet::Environments
      end
    end
  
@@ -158,61 +220,3 @@ diff -ur puppet-3.7.5.DIST/lib/puppet/environments.rb puppet-3.7.5.PATCHED/lib/p
    # Combine together multiple loaders to act as one.
    # @api private
    class Combined
-diff -ur puppet-3.7.5.DIST/lib/puppet.rb puppet-3.7.5.PATCHED/lib/puppet.rb
---- puppet-3.7.5.DIST/lib/puppet.rb	2015-03-25 16:32:47.000000000 +0000
-+++ puppet-3.7.5.PATCHED/lib/puppet.rb	2015-04-13 20:25:36.513979874 +0000
-@@ -178,22 +178,39 @@
-   # The bindings used for initialization of puppet
-   # @api private
-   def self.base_context(settings)
--    environments = settings[:environmentpath]
--    modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
-+    environment_locator = settings[:environment_locator]
- 
--    if environments.empty?
--      loaders = [Puppet::Environments::Legacy.new]
--    else
--      loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
--      # in case the configured environment (used for the default sometimes)
--      # doesn't exist
--      default_environment = Puppet[:environment].to_sym
--      if default_environment == :production
--        loaders << Puppet::Environments::StaticPrivate.new(
--          Puppet::Node::Environment.create(Puppet[:environment].to_sym,
--                                           [],
--                                           Puppet::Node::Environment::NO_MANIFEST))
--      end
-+    case environment_locator
-+      when "direnv", "external"
-+        if ("direnv" == environment_locator)
-+          environments = settings[:environmentpath]
-+          modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
-+
-+          loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
-+
-+        elsif ("external" == environment_locator)
-+          modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
-+          loaders = [Puppet::Environments::Exec.new(settings[:external_environment_locator], modulepath)]
-+
-+        else
-+          raise Puppet::Error, "Internal error"
-+        end
-+
-+        # in case the configured environment (used for the default sometimes)
-+        # doesn't exist
-+        default_environment = Puppet[:environment].to_sym
-+        if default_environment == :production
-+          loaders << Puppet::Environments::StaticPrivate.new(
-+            Puppet::Node::Environment.create(Puppet[:environment].to_sym,
-+                                             [],
-+                                             Puppet::Node::Environment::NO_MANIFEST))
-+        end
-+
-+      when "legacy"
-+        loaders = [Puppet::Environments::Legacy.new]
-+
-+      else
-+        raise Puppet::Error, "Invalid environment_locator configuration value: #{environment_locator}"
-     end
- 
-     {
