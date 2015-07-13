@@ -1,0 +1,12 @@
+diff -ur awstats-7.3-1.ORIG/wwwroot/cgi-bin/awstats.pl awstats-7.3-1/wwwroot/cgi-bin/awstats.pl
+--- awstats-7.3-1.ORIG/wwwroot/cgi-bin/awstats.pl	2015-01-20 18:23:33.490120896 +0000
++++ awstats-7.3-1/wwwroot/cgi-bin/awstats.pl	2015-07-13 22:33:17.477824674 +0000
+@@ -9106,7 +9111,7 @@
+ 				$i++;
+ 				push @fieldlib, 'tz';
+ 				$PerlParsingFormat .=
+-"([^$LogSeparatorWithoutStar]+T[^$LogSeparatorWithoutStar]+)([-+]\d\d:\d\d)";
++"([^$LogSeparatorWithoutStar]+T[^$LogSeparatorWithoutStar]+)([-+]\\d\\d:?\\d\\d)";
+ 			}
+ 
+ 			# Special for methodurl and methodurlnoprot
