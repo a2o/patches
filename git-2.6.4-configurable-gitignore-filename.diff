@@ -1,0 +1,51 @@
+diff -ur git-2.6.4-DIST/cache.h git-2.6.4/cache.h
+--- git-2.6.4-DIST/cache.h	2015-12-08 22:54:24.000000000 +0000
++++ git-2.6.4/cache.h	2015-12-13 16:04:44.584554288 +0000
+@@ -1624,6 +1624,7 @@
+ 
+ extern const char *editor_program;
+ extern const char *askpass_program;
++extern const char *excludes_default_filename;
+ extern const char *excludes_file;
+ 
+ /* base85 */
+diff -ur git-2.6.4-DIST/config.c git-2.6.4/config.c
+--- git-2.6.4-DIST/config.c	2015-12-08 22:54:24.000000000 +0000
++++ git-2.6.4/config.c	2015-12-13 16:04:44.584554288 +0000
+@@ -861,6 +861,9 @@
+ 	if (!strcmp(var, "core.askpass"))
+ 		return git_config_string(&askpass_program, var, value);
+ 
++	if (!strcmp(var, "core.excludesdefaultfilename"))
++		return git_config_string(&excludes_default_filename, var, value);
++
+ 	if (!strcmp(var, "core.excludesfile"))
+ 		return git_config_pathname(&excludes_file, var, value);
+ 
+diff -ur git-2.6.4-DIST/dir.c git-2.6.4/dir.c
+--- git-2.6.4-DIST/dir.c	2015-12-08 22:54:24.000000000 +0000
++++ git-2.6.4/dir.c	2015-12-13 16:08:53.935280159 +0000
+@@ -2177,7 +2177,11 @@
+ {
+ 	const char *path;
+ 
+-	dir->exclude_per_dir = ".gitignore";
++	if (excludes_default_filename) {
++		dir->exclude_per_dir = excludes_default_filename;
++	} else {
++		dir->exclude_per_dir = ".gitignore";
++	}
+ 
+ 	/* core.excludefile defaulting to $XDG_HOME/git/ignore */
+ 	if (!excludes_file)
+diff -ur git-2.6.4-DIST/environment.c git-2.6.4/environment.c
+--- git-2.6.4-DIST/environment.c	2015-12-08 22:54:24.000000000 +0000
++++ git-2.6.4/environment.c	2015-12-13 16:04:44.584554288 +0000
+@@ -45,6 +45,7 @@
+ int pager_use_color = 1;
+ const char *editor_program;
+ const char *askpass_program;
++const char *excludes_default_filename;
+ const char *excludes_file;
+ enum auto_crlf auto_crlf = AUTO_CRLF_FALSE;
+ int check_replace_refs = 1;
