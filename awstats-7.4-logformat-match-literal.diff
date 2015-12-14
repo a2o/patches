@@ -1,0 +1,16 @@
+diff -ur awstats-7.4-DIST/wwwroot/cgi-bin/awstats.pl awstats-7.4/wwwroot/cgi-bin/awstats.pl
+--- awstats-7.4-DIST/wwwroot/cgi-bin/awstats.pl	2015-07-14 12:52:31.000000000 +0000
++++ awstats-7.4/wwwroot/cgi-bin/awstats.pl	2015-12-14 16:33:05.320776215 +0000
+@@ -9103,6 +9103,11 @@
+ 			# Add separator for next field
+ 			if ($PerlParsingFormat) { $PerlParsingFormat .= "$LogSeparator"; }
+ 
++			# If field is prefixed with custom string, just push it to regex literally
++			if ( $f =~ /^([^%]+)%/ ) {
++				$PerlParsingFormat .= "$1"
++                        }
++
+ 			# Special for logname
+ 			if ( $f =~ /%lognamequot$/ ) {
+ 				$pos_logname = $i;
+Only in awstats-7.4/wwwroot/cgi-bin: awstats.pl.orig
