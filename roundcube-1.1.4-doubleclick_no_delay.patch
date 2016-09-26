@@ -1,0 +1,13 @@
+diff --git a/program/js/app.js b/program/js/app.js
+index 8d4473b..8fbccc4 100644
+--- a/program/js/app.js
++++ b/program/js/app.js
+@@ -1763,7 +1763,7 @@ function rcube_webmail()
+ 
+     // start timer for message preview (wait for double click)
+     if (selected && this.env.contentframe && !list.multi_selecting && !this.dummy_select)
+-      this.preview_timer = setTimeout(function() { ref.msglist_get_preview(); }, this.dblclick_time);
++      this.preview_timer = setTimeout(function() { ref.msglist_get_preview(); }, 0);
+     else if (this.env.contentframe)
+       this.show_contentframe(false);
+   };
