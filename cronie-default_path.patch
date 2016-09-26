@@ -1,0 +1,15 @@
+diff --git a/src/pathnames.h b/src/pathnames.h
+index 1d716be..50ec310 100644
+--- a/src/pathnames.h
++++ b/src/pathnames.h
+@@ -49,9 +49,7 @@
+ # define _PATH_BSHELL "/bin/sh"
+ #endif
+ 
+-#ifndef _PATH_DEFPATH
+-# define _PATH_DEFPATH "/usr/bin:/bin"
+-#endif
++#define _PATH_DEFPATH "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin"
+ 
+ #ifndef _PATH_TMP
+ # define _PATH_TMP "/tmp"
