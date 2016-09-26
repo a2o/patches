@@ -1,0 +1,15 @@
+diff --git a/configure b/configure
+index 5b2d223..9b983ac 100755
+--- a/configure
++++ b/configure
+@@ -12606,13 +12606,8 @@ $as_echo "no" >&6; }
+ fi
+ 
+ 
+- if test "x${have_xmlto}" = "xyes"; then
+-  BUILD_DOC_TRUE=
+-  BUILD_DOC_FALSE='#'
+-else
+   BUILD_DOC_TRUE='#'
+   BUILD_DOC_FALSE=
+-fi
