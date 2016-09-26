@@ -1,0 +1,17 @@
+commit e51ddf6 (HEAD -> master)
+Author: Puppet <root@bast-1.metatron.si>
+Date:   Mon Sep 12 11:15:45 2016 +0000
+
+    removed deprecation warning for core function Q
+
+diff --git a/program/include/bc.php b/program/include/bc.php
+index b4350e4..9e21839 100644
+--- a/program/include/bc.php
++++ b/program/include/bc.php
+@@ -103,7 +103,6 @@ function rep_specialchars_output($str, $enctype='', $mode='', $newlines=true)
+ 
+ function Q($str, $mode='strict', $newlines=true)
+ {
+-    _deprecation_warning(__FUNCTION__);
+     return rcube_utils::rep_specialchars_output($str, 'html', $mode, $newlines);
+ }
