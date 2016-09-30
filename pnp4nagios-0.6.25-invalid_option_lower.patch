@@ -1,0 +1,18 @@
+Author: Miha Rozic <miha@metatron.si>
+Date:   Fri Sep 30 12:56:28 2016 +0000
+
+    fixes error invalid option "lower" with rrdtool 1.6.0
+
+diff --git a/share/pnp/templates.dist/default.php b/share/pnp/templates.dist/default.php
+index 6fdf38c..476fb86 100644
+--- a/share/pnp/templates.dist/default.php
++++ b/share/pnp/templates.dist/default.php
+@@ -47,7 +47,7 @@ foreach ($this->DS as $KEY=>$VAL) {
+                $crit_min = $VAL['CRIT_MIN'];
+        }
+        if ( $VAL['MIN'] != "" && is_numeric($VAL['MIN']) ) {
+-               $lower = " --lower=" . $VAL['MIN'];
++               $lower = " --lower-limit=" . $VAL['MIN'];
+                $minimum = $VAL['MIN'];
+        }
+        if ( $VAL['MAX'] != "" && is_numeric($VAL['MAX']) ) {
