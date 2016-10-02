@@ -1,0 +1,15 @@
+--- virtual.rb.DIST	2016-10-02 12:05:31.955226692 +0000
++++ virtual.rb	2016-10-02 12:06:25.505411868 +0000
+@@ -159,10 +159,10 @@
+   # Implementation derived from
+   # http://stackoverflow.com/questions/20010199/determining-if-a-process-runs-inside-lxc-docker
+   def self.lxc?
+-    path = Pathname.new('/proc/1/cgroup')
++    path = Pathname.new('/proc/1/environ')
+     return false unless path.readable?
+     begin
+-      in_lxc = path.readlines.any? {|l| l.split(":")[2].to_s.include? '/lxc' }
++      in_lxc = path.read.split("\0").any? {|l| l == 'container=lxc' }
+     rescue Errno::EPERM => exc
+       # If we get "operation not permitted" here, it probably means we are
+       # running OpenVZ. We are not running LXC anyway, so...
